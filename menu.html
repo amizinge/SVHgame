@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Street Racer: Urban Chaos - Menu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            overflow-x: hidden;
+        }
+        
+        .hero-title {
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(45deg, #ff6b35, #f7931e, #ff6b35);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease-in-out infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .menu-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 107, 53, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .menu-card:hover {
+            background: rgba(255, 107, 53, 0.1);
+            border-color: rgba(255, 107, 53, 0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
+        }
+        
+        .car-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 107, 53, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .car-card:hover {
+            background: rgba(255, 107, 53, 0.1);
+            border-color: rgba(255, 107, 53, 0.8);
+            transform: scale(1.02);
+        }
+        
+        .car-card.selected {
+            border-color: #ff6b35;
+            background: rgba(255, 107, 53, 0.2);
+            box-shadow: 0 0 20px rgba(255, 107, 53, 0.5);
+        }
+        
+        .cta-button {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .cta-button:hover::before {
+            left: 100%;
+        }
+        
+        .cta-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.5);
+        }
+        
+        .car-showcase {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .car-3d-container {
+            width: 100%;
+            height: 400px;
+            position: relative;
+        }
+        
+        .stats-bar {
+            background: linear-gradient(90deg, #ff6b35, #f7931e);
+            height: 8px;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: rgba(26, 26, 46, 0.95);
+            border: 2px solid #ff6b35;
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-black bg-opacity-50 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold text-white">STREET RACER</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <button onclick="showOptions()" class="text-gray-300 hover:text-orange-400 transition-colors">Options</button>
+                        <button onclick="showControls()" class="text-gray-300 hover:text-orange-400 transition-colors">Controls</button>
+                        <button onclick="window.location.href='index.html'" class="text-gray-300 hover:text-orange-400 transition-colors">Back to Home</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="pt-20 px-4 max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="hero-title text-5xl md:text-7xl font-black mb-4">GAME MENU</h1>
+            <p class="text-xl text-gray-300">Choose your ride and dominate the streets</p>
+        </div>
+
+        <!-- Game Mode Selection -->
+        <div class="grid md:grid-cols-2 gap-8 mb-12">
+            <div class="menu-card rounded-xl p-8 cursor-pointer" onclick="selectGameMode('free-roam')">
+                <div class="text-4xl mb-4">🏙️</div>
+                <h3 class="text-2xl font-bold text-white mb-4">Free Roam</h3>
+                <p class="text-gray-300 mb-4">Explore the city without limits. Cause chaos, evade police, and set high scores.</p>
+                <div class="text-orange-400 font-bold">∞ Unlimited Play</div>
+            </div>
+            <div class="menu-card rounded-xl p-8 cursor-pointer" onclick="selectGameMode('challenge')">
+                <div class="text-4xl mb-4">🏆</div>
+                <h3 class="text-2xl font-bold text-white mb-4">Challenge Mode</h3>
+                <p class="text-gray-300 mb-4">Complete objectives, race against time, and compete for leaderboard positions.</p>
+                <div class="text-orange-400 font-bold">⏱️ Timed Challenges</div>
+            </div>
+        </div>
+
+        <!-- Vehicle Selection -->
+        <div class="mb-12">
+            <h2 class="text-3xl font-bold text-white mb-8 text-center">SELECT YOUR VEHICLE</h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="car-card rounded-xl p-6" onclick="selectCar('sports')" data-car="sports">
+                    <div class="aspect-video bg-gray-800 rounded-lg mb-4 flex items-center justify-center">
+                        <div class="text-6xl">🏎️</div>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Sports Car</h3>
+                    <p class="text-gray-300 text-sm mb-4">High speed, low durability</p>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-400">Speed</span>
+                            <span class="text-orange-400">95/100</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-full h-2">
+                            <div class="stats-bar w-[95%]"></div>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-400">Handling</span>
+                            <span class="text-orange-400">90/100</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-full h-2">
+                            <div class="stats-bar w-[90%]"></div>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-400">Durability</span>
+                            <span class="text-orange-400">40/100</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-full h-2">
+                            <div class="stats-bar w-[40%]"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="car-card rounded-xl p-6" onclick="selectCar('muscle')" data-car="muscle">
+                    <div class="aspect-video bg-gray-800 rounded-lg mb-4 flex items-center justify-center">
+                        <div class="text-6xl">🚗</div>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Muscle Car</h3>
+                    <p class="text-gray-300 text-sm mb-4">Balanced performance</p>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-400">Speed</span>
+                            <span class="text-orange-400">75/100</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-full h-2">
+                            <div class="stats-bar w-[75%]"></div>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-400">Handling</span>
+                            <span class="text-orange-400">70/100</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-full h-2">
+                            <div class="stats-bar w-[70%]"></div>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-400">Durability</span>
+                            <span class="text-orange-400">80/100</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-full h-2">
+                            <div class="stats-bar w-[80%]"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="car-card rounded-xl p-6" onclick="selectCar('suv')" data-car="suv">
+                    <div class="aspect-video bg-gray-800 rounded-lg mb-4 flex items-center justify-center">
+                        <div class="text-6xl">🚙</div>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">SUV</h3>
+                    <p class="text-gray-300 text-sm mb-4">High durability, lower speed</p>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-400">Speed</span>
+                            <span class="text-orange-400">50/100</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-full h-2">
+                            <div class="stats-bar w-[50%]"></div>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-400">Handling</span>
+                            <span class="text-orange-400">60/100</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-full h-2">
+                            <div class="stats-bar w-[60%]"></div>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-400">Durability</span>
+                            <span class="text-orange-400">95/100</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-full h-2">
+                            <div class="stats-bar w-[95%]"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3D Car Showcase -->
+        <div class="car-showcase p-8 mb-12">
+            <h3 class="text-2xl font-bold text-white mb-6 text-center">3D VEHICLE PREVIEW</h3>
+            <div class="car-3d-container" id="car3dContainer">
+                <div class="w-full h-full flex items-center justify-center text-gray-400">
+                    <div class="text-center">
+                        <div class="text-6xl mb-4">🚗</div>
+                        <p>Select a vehicle to preview</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Start Game Button -->
+        <div class="text-center mb-12">
+            <button id="startGameBtn" onclick="startGame()" class="cta-button text-white px-16 py-6 rounded-lg text-2xl font-bold disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                START RACING
+            </button>
+            <p class="text-gray-400 mt-4">Select a vehicle to begin</p>
+        </div>
+    </div>
+
+    <!-- Options Modal -->
+    <div id="optionsModal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold text-white mb-6">Game Options</h2>
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-white mb-2">Graphics Quality</label>
+                    <select class="w-full bg-gray-800 text-white p-3 rounded-lg">
+                        <option>High</option>
+                        <option>Medium</option>
+                        <option>Low</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-white mb-2">Audio Volume</label>
+                    <input type="range" min="0" max="100" value="75" class="w-full">
+                </div>
+                <div>
+                    <label class="block text-white mb-2">Show FPS Counter</label>
+                    <input type="checkbox" class="mr-2"> Enable FPS display
+                </div>
+                <div>
+                    <label class="block text-white mb-2">V-Sync</label>
+                    <input type="checkbox" class="mr-2" checked> Enable V-Sync
+                </div>
+            </div>
+            <div class="flex justify-end mt-6">
+                <button onclick="closeModal('optionsModal')" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls Modal -->
+    <div id="controlsModal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold text-white mb-6">Control Settings</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-bold text-orange-400 mb-4">Mouse Controls</h3>
+                    <div class="space-y-2 text-sm text-gray-300">
+                        <div>Left Click + Drag: Steer vehicle</div>
+                        <div>Mouse Wheel: Accelerate/Brake</div>
+                        <div>Right Click: Free camera look</div>
+                        <div>Middle Click: Handbrake</div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-orange-400 mb-4">Keyboard Controls</h3>
+                    <div class="space-y-2 text-sm text-gray-300">
+                        <div>W/S: Forward/Reverse</div>
+                        <div>A/D: Left/Right steering</div>
+                        <div>Space: Handbrake</div>
+                        <div>Shift: Boost/Nitro</div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-orange-400 mb-4">PS5 Controller</h3>
+                    <div class="space-y-2 text-sm text-gray-300">
+                        <div>Left Stick: Steering</div>
+                        <div>R2: Accelerate</div>
+                        <div>L2: Brake/Reverse</div>
+                        <div>X: Handbrake</div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-orange-400 mb-4">Game Features</h3>
+                    <div class="space-y-2 text-sm text-gray-300">
+                        <div>Realistic physics simulation</div>
+                        <div>Dynamic destruction system</div>
+                        <div>Police chase mechanics</div>
+                        <div>Scoring and combo system</div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end mt-6">
+                <button onclick="closeModal('controlsModal')" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedCar = null;
+        let selectedGameMode = 'free-roam';
+        let car3dScene = null;
+
+        function selectGameMode(mode) {
+            selectedGameMode = mode;
+            
+            // Update UI
+            document.querySelectorAll('.menu-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            checkReadyToStart();
+        }
+
+        function selectCar(carType) {
+            selectedCar = carType;
+            
+            // Update UI
+            document.querySelectorAll('.car-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            // Update 3D preview
+            update3dPreview(carType);
+            
+            checkReadyToStart();
+        }
+
+        function update3dPreview(carType) {
+            const container = document.getElementById('car3dContainer');
+            container.innerHTML = `
+                <div class="w-full h-full flex items-center justify-center text-white">
+                    <div class="text-center">
+                        <div class="text-8xl mb-4">${getCarEmoji(carType)}</div>
+                        <h3 class="text-2xl font-bold mb-2">${getCarName(carType)}</h3>
+                        <p class="text-gray-300">${getCarDescription(carType)}</p>
+                    </div>
+                </div>
+            `;
+            
+            // Add rotation animation
+            anime({
+                targets: container.querySelector('.text-8xl'),
+                rotateY: 360,
+                duration: 3000,
+                loop: true,
+                easing: 'linear'
+            });
+        }
+
+        function getCarEmoji(carType) {
+            const emojis = {
+                'sports': '🏎️',
+                'muscle': '🚗',
+                'suv': '🚙'
+            };
+            return emojis[carType] || '🚗';
+        }
+
+        function getCarName(carType) {
+            const names = {
+                'sports': 'Nitro GT-R',
+                'muscle': 'Street Demon',
+                'suv': 'Urban Tank'
+            };
+            return names[carType] || 'Unknown';
+        }
+
+        function getCarDescription(carType) {
+            const descriptions = {
+                'sports': 'Ultimate speed machine for precision racing',
+                'muscle': 'Balanced power and control for street dominance',
+                'suv': 'Maximum durability for destruction and chaos'
+            };
+            return descriptions[carType] || 'No description available';
+        }
+
+        function checkReadyToStart() {
+            const startBtn = document.getElementById('startGameBtn');
+            if (selectedCar && selectedGameMode) {
+                startBtn.disabled = false;
+                startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                startBtn.nextElementSibling.textContent = 'Ready to race!';
+            }
+        }
+
+        function startGame() {
+            if (!selectedCar || !selectedGameMode) return;
+            
+            // Store selections in localStorage
+            localStorage.setItem('selectedCar', selectedCar);
+            localStorage.setItem('selectedGameMode', selectedGameMode);
+            
+            // Navigate to game
+            window.location.href = 'game.html';
+        }
+
+        function showOptions() {
+            document.getElementById('optionsModal').classList.add('active');
+        }
+
+        function showControls() {
+            document.getElementById('controlsModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add entrance animations
+            anime({
+                targets: '.menu-card, .car-card',
+                translateY: [50, 0],
+                opacity: [0, 1],
+                duration: 800,
+                delay: anime.stagger(100),
+                easing: 'easeOutExpo'
+            });
+        });
+
+        // Close modals when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

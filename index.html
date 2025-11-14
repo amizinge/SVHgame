@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urban Velocity - Street Racing Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.8/pixi.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.0/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Audiowide&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+        }
+
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #uiOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .ui-panel {
+            pointer-events: auto;
+            background: rgba(26, 26, 26, 0.9);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
+        }
+
+        #speedometer {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.1) 0%, rgba(26, 26, 26, 0.9) 70%);
+            border: 2px solid #00d4ff;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        #speedometer::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #00d4ff, #ff6b35, #00d4ff);
+            z-index: -1;
+            animation: rotate 3s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .speed-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #00d4ff;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+
+        .speed-unit {
+            font-size: 0.9rem;
+            color: #4a5568;
+            margin-top: -5px;
+        }
+
+        #minimap {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            width: 200px;
+            height: 200px;
+            background: rgba(26, 26, 26, 0.95);
+            border: 1px solid #00d4ff;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        #scoreDisplay {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            padding: 20px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .score-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .score-label {
+            color: #4a5568;
+            margin-right: 10px;
+            min-width: 80px;
+        }
+
+        .score-value {
+            color: #00d4ff;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+
+        #controlPanel {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .control-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+        }
+
+        .control-btn:active {
+            transform: translateY(0);
+        }
+
+        #gameMenu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 40px;
+            text-align: center;
+            z-index: 20;
+            background: rgba(26, 26, 26, 0.95);
+            border: 2px solid #00d4ff;
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+        }
+
+        #gameMenu h1 {
+            font-family: 'Audiowide', cursive;
+            font-size: 3.5rem;
+            color: #00d4ff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+            animation: pulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { text-shadow: 0 0 30px rgba(0, 212, 255, 0.5); }
+            100% { text-shadow: 0 0 50px rgba(0, 212, 255, 0.8), 0 0 70px rgba(0, 212, 255, 0.3); }
+        }
+
+        .menu-subtitle {
+            font-size: 1.2rem;
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .menu-btn {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #ff6b35, #ff4500);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .menu-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.4);
+        }
+
+        #loadingScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(0, 212, 255, 0.3);
+            border-top: 3px solid #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-family: 'Orbitron', monospace;
+            color: #00d4ff;
+            font-size: 1.2rem;
+            animation: pulse 1.5s ease-in-out infinite alternate;
+        }
+
+        #damageIndicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            color: #ff073a;
+            text-shadow: 0 0 20px rgba(255, 7, 58, 0.8);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            #speedometer {
+                width: 150px;
+                height: 150px;
+                bottom: 20px;
+                right: 20px;
+            }
+            
+            #minimap {
+                width: 150px;
+                height: 150px;
+                top: 20px;
+                right: 20px;
+            }
+            
+            #scoreDisplay {
+                top: 20px;
+                left: 20px;
+                padding: 15px;
+            }
+            
+            #controlPanel {
+                bottom: 20px;
+                left: 20px;
+                padding: 15px;
+            }
+            
+            #gameMenu h1 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="uiOverlay">
+            <!-- Speedometer -->
+            <div id="speedometer" class="ui-panel">
+                <div class="speed-value" id="speedValue">0</div>
+                <div class="speed-unit">MPH</div>
+            </div>
+            
+            <!-- Minimap -->
+            <div id="minimap" class="ui-panel">
+                <canvas id="minimapCanvas" width="200" height="200"></canvas>
+            </div>
+            
+            <!-- Score Display -->
+            <div id="scoreDisplay" class="ui-panel">
+                <div class="score-item">
+                    <span class="score-label">SCORE</span>
+                    <span class="score-value" id="currentScore">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">COMBO</span>
+                    <span class="score-value" id="comboMultiplier">x1</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">CASH</span>
+                    <span class="score-value" id="cashEarned">$0</span>
+                </div>
+            </div>
+            
+            <!-- Control Panel -->
+            <div id="controlPanel" class="ui-panel">
+                <button class="control-btn" id="pauseBtn">PAUSE</button>
+                <button class="control-btn" id="resetBtn">RESET</button>
+                <button class="control-btn" id="boostBtn">BOOST</button>
+            </div>
+            
+            <!-- Damage Indicator -->
+            <div id="damageIndicator">CRITICAL DAMAGE!</div>
+        </div>
+        
+        <!-- Game Menu -->
+        <div id="gameMenu" class="hidden">
+            <h1>URBAN VELOCITY</h1>
+            <p class="menu-subtitle">Street Racing Revolution</p>
+            <div class="menu-buttons">
+                <button class="menu-btn" id="startRaceBtn">START RACE</button>
+                <button class="menu-btn" id="garageBtn">GARAGE</button>
+                <button class="menu-btn" id="leaderboardBtn">LEADERBOARD</button>
+                <button class="menu-btn" id="settingsBtn">SETTINGS</button>
+            </div>
+            <p style="color: #4a5568; font-size: 0.9rem;">
+                Use Mouse + WASD or PS5 Controller to drive
+            </p>
+        </div>
+        
+        <!-- Loading Screen -->
+        <div id="loadingScreen">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">INITIALIZING RACING ENGINE...</div>
+        </div>
+    </div>
+
+    <script>
+        // Game state management
+        class GameState {
+            constructor() {
+                this.isRunning = false;
+                this.isPaused = false;
+                this.score = 0;
+                this.combo = 1;
+                this.cash = 0;
+                this.speed = 0;
+                this.damage = 0;
+                this.maxSpeed = 200;
+                this.acceleration = 0.5;
+                this.handling = 0.8;
+                this.selectedCar = 'sports';
+            }
+
+            updateScore(points) {
+                this.score += Math.floor(points * this.combo);
+                this.updateUI();
+            }
+
+            updateCombo(multiplier) {
+                this.combo = Math.min(multiplier, 10);
+                this.updateUI();
+            }
+
+            updateCash(amount) {
+                this.cash += amount;
+                this.updateUI();
+            }
+
+            updateSpeed(newSpeed) {
+                this.speed = Math.min(newSpeed, this.maxSpeed);
+                this.updateUI();
+            }
+
+            updateUI() {
+                document.getElementById('currentScore').textContent = this.score.toLocaleString();
+                document.getElementById('comboMultiplier').textContent = `x${this.combo}`;
+                document.getElementById('cashEarned').textContent = `$${this.cash.toLocaleString()}`;
+                document.getElementById('speedValue').textContent = Math.floor(this.speed);
+            }
+
+            reset() {
+                this.score = 0;
+                this.combo = 1;
+                this.speed = 0;
+                this.damage = 0;
+                this.updateUI();
+            }
+        }
+
+        // Input handling system
+        class InputManager {
+            constructor() {
+                this.keys = {};
+                this.mouse = { x: 0, y: 0, pressed: false };
+                this.gamepad = null;
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                // Keyboard events
+                document.addEventListener('keydown', (e) => {
+                    this.keys[e.code] = true;
+                });
+
+                document.addEventListener('keyup', (e) => {
+                    this.keys[e.code] = false;
+                });
+
+                // Mouse events
+                document.addEventListener('mousemove', (e) => {
+                    this.mouse.x = e.clientX;
+                    this.mouse.y = e.clientY;
+                });
+
+                document.addEventListener('mousedown', (e) => {
+                    this.mouse.pressed = true;
+                });
+
+                document.addEventListener('mouseup', (e) => {
+                    this.mouse.pressed = false;
+                });
+
+                // Gamepad events
+                window.addEventListener('gamepadconnected', (e) => {
+                    this.gamepad = e.gamepad;
+                    console.log('Gamepad connected:', e.gamepad.id);
+                });
+
+                window.addEventListener('gamepaddisconnected', (e) => {
+                    this.gamepad = null;
+                });
+            }
+
+            getInputState() {
+                const state = {
+                    accelerate: false,
+                    brake: false,
+                    steerLeft: false,
+                    steerRight: false,
+                    boost: false,
+                    steerValue: 0
+                };
+
+                // Keyboard input
+                state.accelerate = this.keys['KeyW'] || this.keys['ArrowUp'];
+                state.brake = this.keys['KeyS'] || this.keys['ArrowDown'];
+                state.steerLeft = this.keys['KeyA'] || this.keys['ArrowLeft'];
+                state.steerRight = this.keys['KeyD'] || this.keys['ArrowRight'];
+                state.boost = this.keys['Space'];
+
+                // Mouse input for steering
+                if (this.mouse.pressed) {
+                    const centerX = window.innerWidth / 2;
+                    state.steerValue = (this.mouse.x - centerX) / centerX;
+                }
+
+                // Gamepad input
+                if (this.gamepad) {
+                    const gp = navigator.getGamepads()[this.gamepad.index];
+                    if (gp) {
+                        state.accelerate = state.accelerate || gp.buttons[7].value > 0.5; // R2
+                        state.brake = state.brake || gp.buttons[6].value > 0.5; // L2
+                        state.steerValue = gp.axes[0]; // Left stick X
+                        state.boost = state.boost || gp.buttons[0].pressed; // X button
+                    }
+                }
+
+                return state;
+            }
+        }
+
+        // Car physics and rendering
+        class Car {
+            constructor(scene, position = { x: 0, y: 0, z: 0 }) {
+                this.scene = scene;
+                this.position = position;
+                this.velocity = { x: 0, y: 0, z: 0 };
+                this.rotation = 0;
+                this.speed = 0;
+                this.damage = 0;
+                this.mesh = null;
+                this.createMesh();
+            }
+
+            createMesh() {
+                // Create a simple car mesh (box for now)
+                const geometry = new THREE.BoxGeometry(4, 1, 2);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0x00d4ff,
+                    emissive: 0x002244,
+                    shininess: 100
+                });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.mesh.position.set(this.position.x, this.position.y, this.position.z);
+                this.scene.add(this.mesh);
+
+                // Add wheels
+                const wheelGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.3, 8);
+                const wheelMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
+                
+                const wheelPositions = [
+                    { x: 1.5, y: -0.5, z: 1 },
+                    { x: -1.5, y: -0.5, z: 1 },
+                    { x: 1.5, y: -0.5, z: -1 },
+                    { x: -1.5, y: -0.5, z: -1 }
+                ];
+
+                this.wheels = wheelPositions.map(pos => {
+                    const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+                    wheel.rotation.z = Math.PI / 2;
+                    wheel.position.set(pos.x, pos.y, pos.z);
+                    this.mesh.add(wheel);
+                    return wheel;
+                });
+            }
+
+            update(inputState, deltaTime) {
+                if (!this.mesh) return;
+
+                // Handle input
+                if (inputState.accelerate) {
+                    this.speed = Math.min(this.speed + 0.5, gameState.maxSpeed);
+                } else if (inputState.brake) {
+                    this.speed = Math.max(this.speed - 0.8, -this.maxSpeed * 0.5);
+                } else {
+                    this.speed *= 0.95; // Friction
+                }
+
+                // Steering
+                if (Math.abs(inputState.steerValue) > 0.1) {
+                    this.rotation += inputState.steerValue * 0.03 * (this.speed / gameState.maxSpeed);
+                }
+
+                // Update position
+                this.mesh.position.x += Math.sin(this.rotation) * this.speed * deltaTime * 0.01;
+                this.mesh.position.z += Math.cos(this.rotation) * this.speed * deltaTime * 0.01;
+                this.mesh.rotation.y = this.rotation;
+
+                // Animate wheels
+                this.wheels.forEach(wheel => {
+                    wheel.rotation.x += this.speed * deltaTime * 0.001;
+                });
+
+                // Update game state
+                gameState.updateSpeed(Math.abs(this.speed));
+
+                // Boundary checking
+                this.keepInBounds();
+            }
+
+            keepInBounds() {
+                const bounds = 100;
+                if (Math.abs(this.mesh.position.x) > bounds) {
+                    this.mesh.position.x = Math.sign(this.mesh.position.x) * bounds;
+                    this.speed *= -0.5; // Bounce
+                    this.takeDamage(10);
+                }
+                if (Math.abs(this.mesh.position.z) > bounds) {
+                    this.mesh.position.z = Math.sign(this.mesh.position.z) * bounds;
+                    this.speed *= -0.5; // Bounce
+                    this.takeDamage(10);
+                }
+            }
+
+            takeDamage(amount) {
+                this.damage += amount;
+                gameState.damage = this.damage;
+                
+                if (this.damage > 50) {
+                    this.showDamageIndicator();
+                }
+
+                // Visual damage
+                if (this.mesh && this.damage > 30) {
+                    this.mesh.material.color.setHex(0xff073a);
+                    this.mesh.material.emissive.setHex(0x220000);
+                }
+            }
+
+            showDamageIndicator() {
+                const indicator = document.getElementById('damageIndicator');
+                indicator.style.opacity = '1';
+                indicator.style.transform = 'translate(-50%, -50%) scale(1.2)';
+                
+                setTimeout(() => {
+                    indicator.style.opacity = '0';
+                    indicator.style.transform = 'translate(-50%, -50%) scale(1)';
+                }, 1000);
+            }
+
+            destroy() {
+                if (this.mesh) {
+                    this.scene.remove(this.mesh);
+                }
+            }
+        }
+
+        // Game engine
+        class RacingGame {
+            constructor() {
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.car = null;
+                this.inputManager = new InputManager();
+                this.clock = new THREE.Clock();
+                this.gameStarted = false;
+                
+                this.init();
+            }
+
+            init() {
+                this.setupScene();
+                this.setupLighting();
+                this.setupEnvironment();
+                this.setupCar();
+                this.setupEventListeners();
+                this.hideLoadingScreen();
+                this.showMainMenu();
+            }
+
+            setupScene() {
+                // Scene
+                this.scene = new THREE.Scene();
+                this.scene.fog = new THREE.Fog(0x000000, 50, 1000);
+
+                // Camera
+                this.camera = new THREE.PerspectiveCamera(
+                    75,
+                    window.innerWidth / window.innerHeight,
+                    0.1,
+                    1000
+                );
+                this.camera.position.set(0, 10, 20);
+
+                // Renderer
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas: document.getElementById('gameCanvas'),
+                    antialias: true
+                });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setClearColor(0x000000);
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            }
+
+            setupLighting() {
+                // Ambient light
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+                this.scene.add(ambientLight);
+
+                // Main directional light
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+                directionalLight.position.set(50, 100, 50);
+                directionalLight.castShadow = true;
+                directionalLight.shadow.mapSize.width = 2048;
+                directionalLight.shadow.mapSize.height = 2048;
+                this.scene.add(directionalLight);
+
+                // Neon lights
+                const neonLight1 = new THREE.PointLight(0x00d4ff, 2, 100);
+                neonLight1.position.set(20, 10, 20);
+                this.scene.add(neonLight1);
+
+                const neonLight2 = new THREE.PointLight(0xff6b35, 2, 100);
+                neonLight2.position.set(-20, 10, -20);
+                this.scene.add(neonLight2);
+            }
+
+            setupEnvironment() {
+                // Ground
+                const groundGeometry = new THREE.PlaneGeometry(500, 500);
+                const groundMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x222222,
+                    shininess: 10
+                });
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.receiveShadow = true;
+                this.scene.add(ground);
+
+                // City blocks
+                for (let i = 0; i < 20; i++) {
+                    const buildingGeometry = new THREE.BoxGeometry(
+                        Math.random() * 10 + 5,
+                        Math.random() * 30 + 10,
+                        Math.random() * 10 + 5
+                    );
+                    const buildingMaterial = new THREE.MeshPhongMaterial({
+                        color: new THREE.Color().setHSL(0.6, 0.5, Math.random() * 0.3 + 0.1)
+                    });
+                    const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+                    building.position.set(
+                        (Math.random() - 0.5) * 200,
+                        buildingGeometry.parameters.height / 2,
+                        (Math.random() - 0.5) * 200
+                    );
+                    building.castShadow = true;
+                    building.receiveShadow = true;
+                    this.scene.add(building);
+                }
+            }
+
+            setupCar() {
+                this.car = new Car(this.scene);
+            }
+
+            setupEventListeners() {
+                // Window resize
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+                // Menu buttons
+                document.getElementById('startRaceBtn').addEventListener('click', () => {
+                    this.startGame();
+                });
+
+                document.getElementById('garageBtn').addEventListener('click', () => {
+                    window.location.href = 'garage.html';
+                });
+
+                document.getElementById('leaderboardBtn').addEventListener('click', () => {
+                    window.location.href = 'leaderboard.html';
+                });
+
+                document.getElementById('settingsBtn').addEventListener('click', () => {
+                    window.location.href = 'settings.html';
+                });
+
+                // Control buttons
+                document.getElementById('pauseBtn').addEventListener('click', () => {
+                    this.togglePause();
+                });
+
+                document.getElementById('resetBtn').addEventListener('click', () => {
+                    this.resetGame();
+                });
+
+                document.getElementById('boostBtn').addEventListener('click', () => {
+                    this.activateBoost();
+                });
+            }
+
+            startGame() {
+                this.gameStarted = true;
+                document.getElementById('gameMenu').classList.add('hidden');
+                this.animate();
+            }
+
+            togglePause() {
+                this.isPaused = !this.isPaused;
+                if (!this.isPaused) {
+                    this.animate();
+                }
+            }
+
+            resetGame() {
+                gameState.reset();
+                if (this.car) {
+                    this.car.destroy();
+                    this.setupCar();
+                }
+            }
+
+            activateBoost() {
+                if (this.car && this.car.speed > 50) {
+                    this.car.speed = Math.min(this.car.speed * 1.5, gameState.maxSpeed * 1.2);
+                    gameState.updateScore(100);
+                    
+                    // Visual boost effect
+                    this.createBoostEffect();
+                }
+            }
+
+            createBoostEffect() {
+                // Simple boost particle effect
+                const geometry = new THREE.SphereGeometry(0.5, 8, 8);
+                const material = new THREE.MeshBasicMaterial({ 
+                    color: 0x00d4ff,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                
+                for (let i = 0; i < 10; i++) {
+                    const particle = new THREE.Mesh(geometry, material);
+                    particle.position.copy(this.car.mesh.position);
+                    particle.position.x += (Math.random() - 0.5) * 5;
+                    particle.position.z += (Math.random() - 0.5) * 5;
+                    this.scene.add(particle);
+                    
+                    // Animate particle
+                    setTimeout(() => {
+                        this.scene.remove(particle);
+                    }, 1000);
+                }
+            }
+
+            updateCamera() {
+                if (this.car && this.car.mesh) {
+                    // Follow car with smooth camera movement
+                    const targetPosition = {
+                        x: this.car.mesh.position.x - Math.sin(this.car.rotation) * 15,
+                        y: this.car.mesh.position.y + 10,
+                        z: this.car.mesh.position.z - Math.cos(this.car.rotation) * 15
+                    };
+                    
+                    this.camera.position.lerp(new THREE.Vector3(targetPosition.x, targetPosition.y, targetPosition.z), 0.1);
+                    this.camera.lookAt(this.car.mesh.position);
+                }
+            }
+
+            animate() {
+                if (this.isPaused || !this.gameStarted) return;
+
+                requestAnimationFrame(() => this.animate());
+
+                const deltaTime = this.clock.getDelta();
+                const inputState = this.inputManager.getInputState();
+
+                // Update car
+                if (this.car) {
+                    this.car.update(inputState, deltaTime);
+                }
+
+                // Update camera
+                this.updateCamera();
+
+                // Update minimap
+                this.updateMinimap();
+
+                // Add score for driving
+                if (this.car && Math.abs(this.car.speed) > 10) {
+                    gameState.updateScore(Math.abs(this.car.speed) * 0.1);
+                }
+
+                // Render
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            updateMinimap() {
+                const canvas = document.getElementById('minimapCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Clear canvas
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(0, 0, 200, 200);
+                
+                if (this.car && this.car.mesh) {
+                    // Draw car position
+                    const x = (this.car.mesh.position.x + 100) / 200 * 200;
+                    const z = (this.car.mesh.position.z + 100) / 200 * 200;
+                    
+                    ctx.fillStyle = '#00d4ff';
+                    ctx.beginPath();
+                    ctx.arc(x, z, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Draw direction
+                    ctx.strokeStyle = '#00d4ff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x, z);
+                    ctx.lineTo(
+                        x + Math.sin(this.car.rotation) * 15,
+                        z + Math.cos(this.car.rotation) * 15
+                    );
+                    ctx.stroke();
+                }
+            }
+
+            hideLoadingScreen() {
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('loadingScreen').style.display = 'none';
+                    }, 500);
+                }, 2000);
+            }
+
+            showMainMenu() {
+                setTimeout(() => {
+                    document.getElementById('gameMenu').classList.remove('hidden');
+                }, 2500);
+            }
+        }
+
+        // Initialize game
+        let gameState, racingGame;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            gameState = new GameState();
+            racingGame = new RacingGame();
+        });
+    </script>
+</body>
+</html>

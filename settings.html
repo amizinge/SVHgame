@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Urban Velocity</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Audiowide&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .settings-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .settings-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .settings-title {
+            font-family: 'Audiowide', cursive;
+            font-size: 3.5rem;
+            color: #00d4ff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+            animation: pulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { text-shadow: 0 0 30px rgba(0, 212, 255, 0.5); }
+            100% { text-shadow: 0 0 50px rgba(0, 212, 255, 0.8), 0 0 70px rgba(0, 212, 255, 0.3); }
+        }
+
+        .settings-subtitle {
+            font-size: 1.2rem;
+            color: #4a5568;
+            font-weight: 300;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .settings-section {
+            background: rgba(26, 26, 26, 0.9);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .settings-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(0, 212, 255, 0.05), rgba(255, 107, 53, 0.05));
+            z-index: -1;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            color: #00d4ff;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-icon {
+            font-size: 1.8rem;
+        }
+
+        .setting-item {
+            margin-bottom: 25px;
+        }
+
+        .setting-label {
+            display: block;
+            font-weight: 500;
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .setting-description {
+            font-size: 0.9rem;
+            color: #4a5568;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .setting-control {
+            width: 100%;
+            position: relative;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(74, 85, 104, 0.3);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(74, 85, 104, 0.3);
+            transition: 0.4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .dropdown {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(42, 42, 42, 0.8);
+            border: 1px solid rgba(74, 85, 104, 0.3);
+            border-radius: 8px;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown:hover {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .dropdown:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+        }
+
+        .key-binding {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: rgba(42, 42, 42, 0.5);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .key-action {
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .key-assignment {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            padding: 6px 12px;
+            border-radius: 4px;
+            color: #00d4ff;
+            font-size: 0.9rem;
+            cursor: pointer;
+            min-width: 80px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .key-assignment:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .color-picker {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .color-picker:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+
+        .action-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Orbitron', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            min-width: 140px;
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            color: white;
+        }
+
+        .secondary-btn {
+            background: linear-gradient(135deg, #ff6b35, #ff4500);
+            color: white;
+        }
+
+        .danger-btn {
+            background: linear-gradient(135deg, #ff073a, #cc0033);
+            color: white;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 212, 255, 0.4);
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 12px 24px;
+            background: rgba(26, 26, 26, 0.9);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            color: #00d4ff;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 212, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .settings-container {
+                padding: 20px 10px;
+            }
+            
+            .settings-title {
+                font-size: 2rem;
+            }
+            
+            .settings-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .settings-section {
+                padding: 20px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← BACK TO GAME</a>
+
+    <div class="settings-container">
+        <div class="settings-header">
+            <h1 class="settings-title">SETTINGS</h1>
+            <p class="settings-subtitle">Customize Your Racing Experience</p>
+        </div>
+
+        <div class="settings-grid">
+            <div class="settings-section">
+                <h2 class="section-title">
+                    <span class="section-icon">🎮</span>
+                    Controls
+                </h2>
+                
+                <div class="setting-item">
+                    <label class="setting-label">Input Method</label>
+                    <p class="setting-description">Choose your preferred control scheme</p>
+                    <select class="dropdown" id="inputMethod">
+                        <option value="mouse">Mouse + Keyboard</option>
+                        <option value="gamepad">Gamepad (PS5/Xbox)</option>
+                        <option value="keyboard">Keyboard Only</option>
+                        <option value="touch">Touch (Mobile)</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Mouse Sensitivity</label>
+                    <p class="setting-description">Adjust steering sensitivity for mouse control</p>
+                    <div class="setting-control">
+                        <input type="range" min="1" max="10" value="5" class="slider" id="mouseSensitivity">
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Vibration</label>
+                    <p class="setting-description">Enable controller vibration feedback</p>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="vibration" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Key Bindings</label>
+                    <p class="setting-description">Customize your control keys</p>
+                    <div class="key-binding">
+                        <span class="key-action">Accelerate</span>
+                        <span class="key-assignment" data-action="accelerate">W</span>
+                    </div>
+                    <div class="key-binding">
+                        <span class="key-action">Brake/Reverse</span>
+                        <span class="key-assignment" data-action="brake">S</span>
+                    </div>
+                    <div class="key-binding">
+                        <span class="key-action">Steer Left</span>
+                        <span class="key-assignment" data-action="left">A</span>
+                    </div>
+                    <div class="key-binding">
+                        <span class="key-action">Steer Right</span>
+                        <span class="key-assignment" data-action="right">D</span>
+                    </div>
+                    <div class="key-binding">
+                        <span class="key-action">Boost</span>
+                        <span class="key-assignment" data-action="boost">SPACE</span>
+                    </div>
+                    <div class="key-binding">
+                        <span class="key-action">Handbrake</span>
+                        <span class="key-assignment" data-action="handbrake">SHIFT</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h2 class="section-title">
+                    <span class="section-icon">🎨</span>
+                    Graphics
+                </h2>
+                
+                <div class="setting-item">
+                    <label class="setting-label">Graphics Quality</label>
+                    <p class="setting-description">Adjust visual quality for performance</p>
+                    <select class="dropdown" id="graphicsQuality">
+                        <option value="low">Low (Best Performance)</option>
+                        <option value="medium" selected>Medium (Balanced)</option>
+                        <option value="high">High (Best Quality)</option>
+                        <option value="ultra">Ultra (Extreme Quality)</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Resolution</label>
+                    <p class="setting-description">Set your display resolution</p>
+                    <select class="dropdown" id="resolution">
+                        <option value="720p">1280x720 (HD)</option>
+                        <option value="1080p" selected>1920x1080 (Full HD)</option>
+                        <option value="1440p">2560x1440 (QHD)</option>
+                        <option value="2160p">3840x2160 (4K)</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Frame Rate Limit</label>
+                    <p class="setting-description">Set maximum frames per second</p>
+                    <select class="dropdown" id="frameRate">
+                        <option value="30">30 FPS</option>
+                        <option value="60" selected>60 FPS</option>
+                        <option value="120">120 FPS</option>
+                        <option value="144">144 FPS</option>
+                        <option value="unlimited">Unlimited</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Anti-Aliasing</label>
+                    <p class="setting-description">Reduce jagged edges for smoother visuals</p>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="antiAliasing" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Shadows</label>
+                    <p class="setting-description">Enable dynamic shadows for realism</p>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="shadows" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Particle Effects</label>
+                    <p class="setting-description">Show explosions, smoke, and other effects</p>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="particles" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h2 class="section-title">
+                    <span class="section-icon">🔊</span>
+                    Audio
+                </h2>
+                
+                <div class="setting-item">
+                    <label class="setting-label">Master Volume</label>
+                    <p class="setting-description">Overall game volume level</p>
+                    <div class="setting-control">
+                        <input type="range" min="0" max="100" value="75" class="slider" id="masterVolume">
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Engine Volume</label>
+                    <p class="setting-description">Car engine sound effects</p>
+                    <div class="setting-control">
+                        <input type="range" min="0" max="100" value="80" class="slider" id="engineVolume">
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Music Volume</label>
+                    <p class="setting-description">Background music level</p>
+                    <div class="setting-control">
+                        <input type="range" min="0" max="100" value="60" class="slider" id="musicVolume">
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Effects Volume</label>
+                    <p class="setting-description">Collision and UI sound effects</p>
+                    <div class="setting-control">
+                        <input type="range" min="0" max="100" value="70" class="slider" id="effectsVolume">
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Audio Quality</label>
+                    <p class="setting-description">Sound quality and sample rate</p>
+                    <select class="dropdown" id="audioQuality">
+                        <option value="low">Low (22kHz)</option>
+                        <option value="medium" selected>Medium (44kHz)</option>
+                        <option value="high">High (96kHz)</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">3D Audio</label>
+                    <p class="setting-description">Spatial audio for immersive experience</p>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="3dAudio" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h2 class="section-title">
+                    <span class="section-icon">🎯</span>
+                    Gameplay
+                </h2>
+                
+                <div class="setting-item">
+                    <label class="setting-label">Difficulty Level</label>
+                    <p class="setting-description">Adjust AI opponent strength</p>
+                    <select class="dropdown" id="difficulty">
+                        <option value="easy">Easy (Relaxed Racing)</option>
+                        <option value="normal" selected>Normal (Balanced Challenge)</option>
+                        <option value="hard">Hard (Intense Competition)</option>
+                        <option value="extreme">Extreme (Professional Level)</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Damage System</label>
+                    <p class="setting-description">Realistic car damage and repairs</p>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="damageSystem" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Racing Line</label>
+                    <p class="setting-description">Show optimal racing path</p>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="racingLine">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Auto Brake</label>
+                    <p class="setting-description">Automatic braking assistance</p>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="autoBrake">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Traffic Density</label>
+                    <p class="setting-description">Amount of AI traffic on roads</p>
+                    <select class="dropdown" id="trafficDensity">
+                        <option value="low">Low (Clear Roads)</option>
+                        <option value="medium" selected>Medium (Some Traffic)</option>
+                        <option value="high">High (Busy Streets)</option>
+                        <option value="extreme">Extreme (Rush Hour)</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Weather Effects</label>
+                    <p class="setting-description">Dynamic weather conditions</p>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="weatherEffects" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h2 class="section-title">
+                    <span class="section-icon">🎨</span>
+                    Interface
+                </h2>
+                
+                <div class="setting-item">
+                    <label class="setting-label">HUD Style</label>
+                    <p class="setting-description">Choose your preferred interface theme</p>
+                    <select class="dropdown" id="hudStyle">
+                        <option value="neon" selected>Neon Blue (Default)</option>
+                        <option value="orange">Neon Orange</option>
+                        <option value="green">Neon Green</option>
+                        <option value="purple">Neon Purple</option>
+                        <option value="minimal">Minimal</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Speedometer Style</label>
+                    <p class="setting-description">Speed display format</p>
+                    <select class="dropdown" id="speedometerStyle">
+                        <option value="digital" selected>Digital Display</option>
+                        <option value="analog">Analog Gauge</option>
+                        <option value="hybrid">Hybrid (Both)</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">HUD Scale</label>
+                    <p class="setting-description">Interface size adjustment</p>
+                    <div class="setting-control">
+                        <input type="range" min="50" max="150" value="100" class="slider" id="hudScale">
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Minimap Size</label>
+                    <p class="setting-description">Radar/map display size</p>
+                    <div class="setting-control">
+                        <input type="range" min="100" max="300" value="200" class="slider" id="minimapSize">
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Show FPS Counter</label>
+                    <p class="setting-description">Display frames per second</p>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="showFPS">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Chat Display</label>
+                    <p class="setting-description">Show multiplayer chat messages</p>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="chatDisplay" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h2 class="section-title">
+                    <span class="section-icon">⚙️</span>
+                    Advanced
+                </h2>
+                
+                <div class="setting-item">
+                    <label class="setting-label">Network Quality</label>
+                    <p class="setting-description">Optimize for your internet connection</p>
+                    <select class="dropdown" id="networkQuality">
+                        <option value="low">Low (1-5 Mbps)</option>
+                        <option value="medium" selected>Medium (5-20 Mbps)</option>
+                        <option value="high">High (20+ Mbps)</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Data Collection</label>
+                    <p class="setting-description">Help improve the game with anonymous data</p>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="dataCollection" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Beta Features</label>
+                    <p class="setting-description">Try experimental game features</p>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="betaFeatures">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Debug Mode</label>
+                    <p class="setting-description">Show technical information for troubleshooting</p>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="debugMode">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="action-btn primary-btn" id="saveSettings">Save Settings</button>
+            <button class="action-btn secondary-btn" id="resetSettings">Reset to Default</button>
+            <button class="action-btn danger-btn" id="clearData">Clear All Data</button>
+        </div>
+    </div>
+
+    <script>
+        // Default settings
+        const defaultSettings = {
+            inputMethod: 'mouse',
+            mouseSensitivity: 5,
+            vibration: true,
+            graphicsQuality: 'medium',
+            resolution: '1080p',
+            frameRate: '60',
+            antiAliasing: true,
+            shadows: true,
+            particles: true,
+            masterVolume: 75,
+            engineVolume: 80,
+            musicVolume: 60,
+            effectsVolume: 70,
+            audioQuality: 'medium',
+            '3dAudio': true,
+            difficulty: 'normal',
+            damageSystem: true,
+            racingLine: false,
+            autoBrake: false,
+            trafficDensity: 'medium',
+            weatherEffects: true,
+            hudStyle: 'neon',
+            speedometerStyle: 'digital',
+            hudScale: 100,
+            minimapSize: 200,
+            showFPS: false,
+            chatDisplay: true,
+            networkQuality: 'medium',
+            dataCollection: true,
+            betaFeatures: false,
+            debugMode: false
+        };
+
+        let currentSettings = { ...defaultSettings };
+
+        // Initialize settings
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            setupEventListeners();
+            animateElements();
+        });
+
+        function setupEventListeners() {
+            // Save settings button
+            document.getElementById('saveSettings').addEventListener('click', saveSettings);
+            
+            // Reset settings button
+            document.getElementById('resetSettings').addEventListener('click', resetSettings);
+            
+            // Clear data button
+            document.getElementById('clearData').addEventListener('click', clearData);
+
+            // Key binding clicks
+            document.querySelectorAll('.key-assignment').forEach(key => {
+                key.addEventListener('click', (e) => {
+                    startKeyBinding(e.target);
+                });
+            });
+
+            // Real-time setting updates
+            document.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    updateSetting(e.target.id, getInputValue(e.target));
+                });
+            });
+        }
+
+        function getInputValue(input) {
+            if (input.type === 'checkbox') {
+                return input.checked;
+            } else if (input.type === 'range') {
+                return parseInt(input.value);
+            } else {
+                return input.value;
+            }
+        }
+
+        function updateSetting(key, value) {
+            currentSettings[key] = value;
+            
+            // Visual feedback
+            const element = document.getElementById(key);
+            if (element) {
+                element.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    element.style.transform = 'scale(1)';
+                }, 200);
+            }
+        }
+
+        function loadSettings() {
+            // Load from localStorage or use defaults
+            const saved = localStorage.getItem('gameSettings');
+            if (saved) {
+                currentSettings = { ...defaultSettings, ...JSON.parse(saved) };
+            }
+
+            // Apply settings to UI
+            Object.entries(currentSettings).forEach(([key, value]) => {
+                const element = document.getElementById(key);
+                if (element) {
+                    if (element.type === 'checkbox') {
+                        element.checked = value;
+                    } else if (element.type === 'range') {
+                        element.value = value;
+                    } else {
+                        element.value = value;
+                    }
+                }
+            });
+        }
+
+        function saveSettings() {
+            localStorage.setItem('gameSettings', JSON.stringify(currentSettings));
+            
+            // Show success message
+            showNotification('Settings Saved!', 'Your preferences have been saved successfully.');
+            
+            // Animate save button
+            const btn = document.getElementById('saveSettings');
+            btn.textContent = 'SAVED!';
+            btn.style.background = 'linear-gradient(135deg, #39ff14, #00cc00)';
+            
+            setTimeout(() => {
+                btn.textContent = 'Save Settings';
+                btn.style.background = 'linear-gradient(135deg, #00d4ff, #0099cc)';
+            }, 2000);
+        }
+
+        function resetSettings() {
+            currentSettings = { ...defaultSettings };
+            
+            // Apply to UI
+            Object.entries(currentSettings).forEach(([key, value]) => {
+                const element = document.getElementById(key);
+                if (element) {
+                    if (element.type === 'checkbox') {
+                        element.checked = value;
+                    } else if (element.type === 'range') {
+                        element.value = value;
+                    } else {
+                        element.value = value;
+                    }
+                }
+            });
+            
+            showNotification('Settings Reset', 'All settings have been restored to default values.');
+        }
+
+        function clearData() {
+            if (confirm('Are you sure you want to clear all game data? This cannot be undone.')) {
+                localStorage.clear();
+                showNotification('Data Cleared', 'All game data has been removed.');
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
+        }
+
+        function startKeyBinding(element) {
+            const originalText = element.textContent;
+            element.textContent = 'Press Key...';
+            element.style.background = 'rgba(255, 107, 53, 0.3)';
+            
+            const handleKeyPress = (e) => {
+                e.preventDefault();
+                const key = e.key.toUpperCase();
+                element.textContent = key;
+                element.style.background = 'rgba(0, 212, 255, 0.1)';
+                
+                // Update setting
+                const action = element.dataset.action;
+                currentSettings[`key_${action}`] = key;
+                
+                document.removeEventListener('keydown', handleKeyPress);
+            };
+            
+            document.addEventListener('keydown', handleKeyPress);
+            
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                if (element.textContent === 'Press Key...') {
+                    element.textContent = originalText;
+                    element.style.background = 'rgba(0, 212, 255, 0.1)';
+                    document.removeEventListener('keydown', handleKeyPress);
+                }
+            }, 5000);
+        }
+
+        function showNotification(title, message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(26, 26, 26, 0.95);
+                border: 2px solid #00d4ff;
+                border-radius: 15px;
+                padding: 30px;
+                text-align: center;
+                z-index: 1000;
+                backdrop-filter: blur(10px);
+                box-shadow: 0 20px 40px rgba(0, 212, 255, 0.3);
+            `;
+            
+            notification.innerHTML = `
+                <h3 style="font-family: 'Orbitron', monospace; color: #00d4ff; font-size: 1.5rem; margin-bottom: 10px;">${title}</h3>
+                <p style="color: #4a5568; font-size: 1rem;">${message}</p>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            anime({
+                targets: notification,
+                scale: [0, 1],
+                opacity: [0, 1],
+                duration: 500,
+                easing: 'easeOutBack'
+            });
+            
+            setTimeout(() => {
+                anime({
+                    targets: notification,
+                    scale: [1, 0],
+                    opacity: [1, 0],
+                    duration: 300,
+                    easing: 'easeInBack',
+                    complete: () => {
+                        document.body.removeChild(notification);
+                    }
+                });
+            }, 2500);
+        }
+
+        function animateElements() {
+            anime({
+                targets: '.settings-section',
+                translateY: [50, 0],
+                opacity: [0, 1],
+                delay: anime.stagger(150),
+                duration: 800,
+                easing: 'easeOutExpo'
+            });
+        }
+    </script>
+</body>
+</html>

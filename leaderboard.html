@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - Urban Velocity</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.0/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Audiowide&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .leaderboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .leaderboard-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .leaderboard-title {
+            font-family: 'Audiowide', cursive;
+            font-size: 3.5rem;
+            color: #00d4ff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+            animation: pulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { text-shadow: 0 0 30px rgba(0, 212, 255, 0.5); }
+            100% { text-shadow: 0 0 50px rgba(0, 212, 255, 0.8), 0 0 70px rgba(0, 212, 255, 0.3); }
+        }
+
+        .leaderboard-subtitle {
+            font-size: 1.2rem;
+            color: #4a5568;
+            font-weight: 300;
+        }
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+
+        .stat-card {
+            background: rgba(26, 26, 26, 0.9);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(0, 212, 255, 0.05), rgba(255, 107, 53, 0.05));
+            z-index: -1;
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #00d4ff, #ff6b35);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.2rem;
+            color: #00d4ff;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #4a5568;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+
+        .leaderboard-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .leaderboard-main {
+            background: rgba(26, 26, 26, 0.9);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .leaderboard-title-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .leaderboard-section-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8rem;
+            color: #00d4ff;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .leaderboard-filters {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            background: rgba(42, 42, 42, 0.8);
+            border: 1px solid rgba(74, 85, 104, 0.3);
+            border-radius: 8px;
+            color: #4a5568;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            border-color: #00d4ff;
+            color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-header-row {
+            background: rgba(0, 212, 255, 0.1);
+            border-bottom: 2px solid #00d4ff;
+        }
+
+        .leaderboard-header-cell {
+            padding: 15px 10px;
+            text-align: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            color: #00d4ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .leaderboard-row {
+            border-bottom: 1px solid rgba(74, 85, 104, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .leaderboard-row:hover {
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .leaderboard-cell {
+            padding: 12px 10px;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+
+        .rank-cell {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .rank-1 { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        .rank-2 { color: #c0c0c0; text-shadow: 0 0 10px rgba(192, 192, 192, 0.5); }
+        .rank-3 { color: #cd7f32; text-shadow: 0 0 10px rgba(205, 127, 50, 0.5); }
+        .rank-other { color: #4a5568; }
+
+        .player-name {
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .score-cell {
+            font-family: 'JetBrains Mono', monospace;
+            color: #00d4ff;
+            font-weight: 600;
+        }
+
+        .car-cell {
+            color: #ff6b35;
+            font-weight: 500;
+        }
+
+        .time-cell {
+            font-family: 'JetBrains Mono', monospace;
+            color: #39ff14;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .chart-container {
+            background: rgba(26, 26, 26, 0.9);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .chart-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3rem;
+            color: #00d4ff;
+            margin-bottom: 20px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .chart {
+            width: 100%;
+            height: 300px;
+        }
+
+        .achievements {
+            background: rgba(26, 26, 26, 0.9);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: rgba(42, 42, 42, 0.5);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .achievement-item:hover {
+            background: rgba(0, 212, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .achievement-icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            color: #ff6b35;
+        }
+
+        .achievement-info {
+            flex: 1;
+        }
+
+        .achievement-name {
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 3px;
+        }
+
+        .achievement-desc {
+            font-size: 0.85rem;
+            color: #4a5568;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 12px 24px;
+            background: rgba(26, 26, 26, 0.9);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            color: #00d4ff;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 212, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 1024px) {
+            .leaderboard-layout {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            
+            .leaderboard-title {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .leaderboard-container {
+                padding: 20px 10px;
+            }
+            
+            .leaderboard-title {
+                font-size: 2rem;
+            }
+            
+            .stats-overview {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            
+            .leaderboard-filters {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .filter-btn {
+                padding: 8px 16px;
+                font-size: 0.8rem;
+            }
+            
+            .leaderboard-cell {
+                padding: 8px 5px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← BACK TO GAME</a>
+
+    <div class="leaderboard-container">
+        <div class="leaderboard-header">
+            <h1 class="leaderboard-title">LEADERBOARD</h1>
+            <p class="leaderboard-subtitle">Race to the Top</p>
+        </div>
+
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-icon">🏆</div>
+                <div class="stat-value" id="totalPlayers">1,247</div>
+                <div class="stat-label">Total Players</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🎮</div>
+                <div class="stat-value" id="totalRaces">15,892</div>
+                <div class="stat-label">Races Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-value" id="totalPrize">$2.4M</div>
+                <div class="stat-label">Prize Pool</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-value" id="bestTime">1:23.45</div>
+                <div class="stat-label">Best Lap Time</div>
+            </div>
+        </div>
+
+        <div class="leaderboard-layout">
+            <div class="leaderboard-main">
+                <div class="leaderboard-title-section">
+                    <h2 class="leaderboard-section-title">Top Racers</h2>
+                    <div class="leaderboard-filters">
+                        <button class="filter-btn active" data-filter="overall">Overall</button>
+                        <button class="filter-btn" data-filter="weekly">Weekly</button>
+                        <button class="filter-btn" data-filter="monthly">Monthly</button>
+                        <button class="filter-btn" data-filter="friends">Friends</button>
+                    </div>
+                </div>
+
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr class="leaderboard-header-row">
+                            <th class="leaderboard-header-cell">Rank</th>
+                            <th class="leaderboard-header-cell">Player</th>
+                            <th class="leaderboard-header-cell">Score</th>
+                            <th class="leaderboard-header-cell">Car</th>
+                            <th class="leaderboard-header-cell">Best Time</th>
+                            <th class="leaderboard-header-cell">Races</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody">
+                        <!-- Leaderboard data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="sidebar">
+                <div class="chart-container">
+                    <h3 class="chart-title">Performance Chart</h3>
+                    <div id="performanceChart" class="chart"></div>
+                </div>
+
+                <div class="achievements">
+                    <h3 class="chart-title">Achievements</h3>
+                    <div id="achievementsList">
+                        <!-- Achievements will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample leaderboard data
+        const leaderboardData = {
+            overall: [
+                { rank: 1, name: 'NitroKing', score: 2456789, car: 'Supercar', time: '1:23.45', races: 342 },
+                { rank: 2, name: 'SpeedDemon', score: 2234567, car: 'Sports Coupe', time: '1:24.12', races: 298 },
+                { rank: 3, name: 'DriftMaster', score: 2123456, car: 'Sports Coupe', time: '1:25.67', races: 276 },
+                { rank: 4, name: 'GhostRider', score: 1987654, car: 'Performance SUV', time: '1:26.23', races: 254 },
+                { rank: 5, name: 'StreetKing', score: 1876543, car: 'Supercar', time: '1:27.89', races: 232 },
+                { rank: 6, name: 'RacingPro', score: 1765432, car: 'Sports Coupe', time: '1:28.34', races: 210 },
+                { rank: 7, name: 'TurboBoost', score: 1654321, car: 'Performance SUV', time: '1:29.56', races: 198 },
+                { rank: 8, name: 'FastLane', score: 1543210, car: 'Supercar', time: '1:30.12', races: 187 },
+                { rank: 9, name: 'QuickShift', score: 1432109, car: 'Sports Coupe', time: '1:31.45', races: 176 },
+                { rank: 10, name: 'UrbanRacer', score: 1321098, car: 'Performance SUV', time: '1:32.78', races: 165 }
+            ],
+            weekly: [
+                { rank: 1, name: 'SpeedDemon', score: 156789, car: 'Sports Coupe', time: '1:24.12', races: 45 },
+                { rank: 2, name: 'NitroKing', score: 145678, car: 'Supercar', time: '1:23.45', races: 42 },
+                { rank: 3, name: 'NewRacer', score: 134567, car: 'Sports Coupe', time: '1:26.89', races: 38 },
+                { rank: 4, name: 'DriftMaster', score: 123456, car: 'Sports Coupe', time: '1:25.67', races: 35 },
+                { rank: 5, name: 'WeekendWarrior', score: 112345, car: 'Performance SUV', time: '1:28.45', races: 32 }
+            ],
+            monthly: [
+                { rank: 1, name: 'NitroKing', score: 567890, car: 'Supercar', time: '1:23.45', races: 156 },
+                { rank: 2, name: 'SpeedDemon', score: 456789, car: 'Sports Coupe', time: '1:24.12', races: 142 },
+                { rank: 3, name: 'DriftMaster', score: 345678, car: 'Sports Coupe', time: '1:25.67', races: 128 },
+                { rank: 4, name: 'StreetKing', score: 234567, car: 'Supercar', time: '1:27.89', races: 115 },
+                { rank: 5, name: 'GhostRider', score: 123456, car: 'Performance SUV', time: '1:26.23', races: 102 }
+            ],
+            friends: [
+                { rank: 1, name: 'You', score: 987654, car: 'Sports Coupe', time: '1:29.34', races: 89 },
+                { rank: 2, name: 'Friend1', score: 876543, car: 'Supercar', time: '1:30.56', races: 76 },
+                { rank: 3, name: 'Friend2', score: 765432, car: 'Performance SUV', time: '1:31.78', races: 65 },
+                { rank: 4, name: 'Friend3', score: 654321, car: 'Sports Coupe', time: '1:32.89', races: 54 }
+            ]
+        };
+
+        const achievements = [
+            { icon: '🏎️', name: 'Speed Demon', desc: 'Reach 200 mph' },
+            { icon: '💥', name: 'Destruction Master', desc: 'Destroy 100 objects' },
+            { icon: '🎯', name: 'Precision Driver', desc: 'Complete 50 perfect laps' },
+            { icon: '🔥', name: 'Combo King', desc: 'Achieve 10x combo multiplier' },
+            { icon: '💰', name: 'Money Maker', desc: 'Earn $1,000,000' },
+            { icon: '🏆', name: 'Champion', desc: 'Win 100 races' },
+            { icon: '🌟', name: 'Rising Star', desc: 'Reach top 100 leaderboard' },
+            { icon: '🎮', name: 'Dedicated Player', desc: 'Play for 100 hours' }
+        ];
+
+        let currentFilter = 'overall';
+        let performanceChart;
+
+        // Initialize leaderboard
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            updateLeaderboard();
+            initializeCharts();
+            populateAchievements();
+            animateElements();
+        });
+
+        function setupEventListeners() {
+            // Filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+                    updateLeaderboard();
+                });
+            });
+        }
+
+        function updateLeaderboard() {
+            const data = leaderboardData[currentFilter] || leaderboardData.overall;
+            const tbody = document.getElementById('leaderboardBody');
+            
+            tbody.innerHTML = '';
+            
+            data.forEach(player => {
+                const row = document.createElement('tr');
+                row.className = 'leaderboard-row';
+                
+                const rankClass = player.rank <= 3 ? `rank-${player.rank}` : 'rank-other';
+                
+                row.innerHTML = `
+                    <td class="leaderboard-cell rank-cell ${rankClass}">${player.rank}</td>
+                    <td class="leaderboard-cell player-name">${player.name}</td>
+                    <td class="leaderboard-cell score-cell">${player.score.toLocaleString()}</td>
+                    <td class="leaderboard-cell car-cell">${player.car}</td>
+                    <td class="leaderboard-cell time-cell">${player.time}</td>
+                    <td class="leaderboard-cell">${player.races}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+
+            // Animate rows
+            anime({
+                targets: '.leaderboard-row',
+                translateX: [-50, 0],
+                opacity: [0, 1],
+                delay: anime.stagger(50),
+                duration: 600,
+                easing: 'easeOutExpo'
+            });
+        }
+
+        function initializeCharts() {
+            // Performance Chart
+            const chartDom = document.getElementById('performanceChart');
+            performanceChart = echarts.init(chartDom, 'dark');
+
+            const option = {
+                backgroundColor: 'transparent',
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(26, 26, 26, 0.9)',
+                    borderColor: '#00d4ff',
+                    textStyle: {
+                        color: '#ffffff'
+                    }
+                },
+                legend: {
+                    data: ['Your Score', 'Average', 'Top Player'],
+                    textStyle: {
+                        color: '#4a5568'
+                    },
+                    top: 10
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    axisLine: {
+                        lineStyle: {
+                            color: '#4a5568'
+                        }
+                    },
+                    axisLabel: {
+                        color: '#4a5568'
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLine: {
+                        lineStyle: {
+                            color: '#4a5568'
+                        }
+                    },
+                    axisLabel: {
+                        color: '#4a5568'
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: 'rgba(74, 85, 104, 0.2)'
+                        }
+                    }
+                },
+                series: [
+                    {
+                        name: 'Your Score',
+                        type: 'line',
+                        stack: 'Total',
+                        data: [12000, 15000, 18000, 22000, 25000, 28000, 32000],
+                        lineStyle: {
+                            color: '#00d4ff'
+                        },
+                        itemStyle: {
+                            color: '#00d4ff'
+                        },
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0,
+                                y: 0,
+                                x2: 0,
+                                y2: 1,
+                                colorStops: [{
+                                    offset: 0, color: 'rgba(0, 212, 255, 0.3)'
+                                }, {
+                                    offset: 1, color: 'rgba(0, 212, 255, 0.1)'
+                                }]
+                            }
+                        }
+                    },
+                    {
+                        name: 'Average',
+                        type: 'line',
+                        data: [8000, 9500, 11000, 12500, 14000, 15500, 17000],
+                        lineStyle: {
+                            color: '#ff6b35'
+                        },
+                        itemStyle: {
+                            color: '#ff6b35'
+                        }
+                    },
+                    {
+                        name: 'Top Player',
+                        type: 'line',
+                        data: [25000, 28000, 32000, 35000, 38000, 42000, 45000],
+                        lineStyle: {
+                            color: '#39ff14'
+                        },
+                        itemStyle: {
+                            color: '#39ff14'
+                        }
+                    }
+                ]
+            };
+
+            performanceChart.setOption(option);
+
+            // Resize chart on window resize
+            window.addEventListener('resize', () => {
+                performanceChart.resize();
+            });
+        }
+
+        function populateAchievements() {
+            const container = document.getElementById('achievementsList');
+            
+            achievements.forEach(achievement => {
+                const item = document.createElement('div');
+                item.className = 'achievement-item';
+                item.innerHTML = `
+                    <div class="achievement-icon">${achievement.icon}</div>
+                    <div class="achievement-info">
+                        <div class="achievement-name">${achievement.name}</div>
+                        <div class="achievement-desc">${achievement.desc}</div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+
+            // Animate achievements
+            anime({
+                targets: '.achievement-item',
+                translateX: [-30, 0],
+                opacity: [0, 1],
+                delay: anime.stagger(100),
+                duration: 500,
+                easing: 'easeOutExpo'
+            });
+        }
+
+        function animateElements() {
+            // Animate stat cards
+            anime({
+                targets: '.stat-card',
+                scale: [0.8, 1],
+                opacity: [0, 1],
+                delay: anime.stagger(150),
+                duration: 800,
+                easing: 'easeOutBack'
+            });
+
+            // Animate main containers
+            anime({
+                targets: '.leaderboard-main, .chart-container, .achievements',
+                translateY: [50, 0],
+                opacity: [0, 1],
+                delay: anime.stagger(200),
+                duration: 800,
+                easing: 'easeOutExpo'
+            });
+
+            // Animate stats counter
+            animateCounters();
+        }
+
+        function animateCounters() {
+            const counters = [
+                { element: document.getElementById('totalPlayers'), target: 1247 },
+                { element: document.getElementById('totalRaces'), target: 15892 },
+                { element: document.getElementById('totalPrize'), target: 2400000, prefix: '$', suffix: 'M', divisor: 1000000 }
+            ];
+
+            counters.forEach(counter => {
+                let current = 0;
+                const increment = counter.target / 100;
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= counter.target) {
+                        current = counter.target;
+                        clearInterval(timer);
+                    }
+                    
+                    let value = current;
+                    if (counter.divisor) {
+                        value = (current / counter.divisor).toFixed(1);
+                    }
+                    
+                    counter.element.textContent = `${counter.prefix || ''}${value}${counter.suffix || ''}`;
+                }, 20);
+            });
+        }
+    </script>
+</body>
+</html>
